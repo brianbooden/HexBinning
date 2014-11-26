@@ -1,0 +1,61 @@
+.qv-object-HexagonalBinning div.qv-object-content-container {
+}
+
+.qv-object-HexagonalBinning .axis text {
+  font: 10px sans-serif;
+}
+
+.qv-object-HexagonalBinning .axis path,
+.qv-object-HexagonalBinning .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.qv-object-HexagonalBinning .hexagon {
+  fill: none;
+  stroke: #000;
+  stroke-width: .5px;
+}
+
+.qv-object-HexagonalBinning .tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 60px;                  
+  height: 28px;                 
+  padding: 2px;             
+  font: 12px sans-serif;        
+  background: lightsteelblue;   
+  border: 0px;      
+  border-radius: 8px;           
+  pointer-events: none;         
+}
+
+.qv-object-HexagonalBinning .d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.qv-object-HexagonalBinning .d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.qv-object-HexagonalBinning .d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}

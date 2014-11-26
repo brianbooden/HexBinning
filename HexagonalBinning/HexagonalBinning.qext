@@ -1,0 +1,9 @@
+{
+	"name" : "Hexagonal Binning",
+	"description" : "Points with a normal distribution are binned into hexagons; area encodes the number of points that fall into each bin",
+	"icon" : "extension",
+	"type" : "visualization",
+	"version": "1.0",
+	"preview" : "table",
+	"author": "Brian Booden"
+}
