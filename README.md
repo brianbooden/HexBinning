@@ -20,6 +20,6 @@ fixed: Configuration of hexagon colour
 added: Fixed layout and colouring for constant size on selection
 added: Option to fill the mesh with hexagons
 
-![Qlik Sense Extension Hexagonal Binning](hexabin1.PNG)
+![Qlik Sense Extension Hexagonal Binning](hexabin1.jpg)
 
-![Qlik Sense Extension Hexagonal Binning](hexabin2.PNG)
+![Qlik Sense Extension Hexagonal Binning](hexabin2.jgp)
