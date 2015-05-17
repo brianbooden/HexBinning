@@ -10,15 +10,14 @@ An example (Hexagonal Binning.qvf) is included.
 
 Future improvements:
 
-partly fixed: Scaling of hexagon sizes and responsive design
-Dealing with > 1000 points
-Inverted (negative) y-axis and scale requires resolution
-fixed: Clipping of hexagons at edge of axes
-fixed: Configuration on hexagon size
-fixed: Configuration of hexagon colour
-
-added: Fixed layout and colouring for constant size on selection
-added: Option to fill the mesh with hexagons
+1. partly fixed: Scaling of hexagon sizes and responsive design
+2. Dealing with > 1000 points
+3. Inverted (negative) y-axis and scale requires resolution
+4. fixed: Clipping of hexagons at edge of axes
+5. fixed: Configuration on hexagon size
+6. fixed: Configuration of hexagon colour
+7. added: Fixed layout and colouring for constant size on selection
+8. added: Option to fill the mesh with hexagons
 
 ![Qlik Sense Extension Hexagonal Binning](hexabin1.jpg)
 
