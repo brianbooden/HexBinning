@@ -22,4 +22,4 @@ added: Option to fill the mesh with hexagons
 
 ![Qlik Sense Extension Hexagonal Binning](hexabin1.jpg)
 
-![Qlik Sense Extension Hexagonal Binning](hexabin2.jgp)
+![Qlik Sense Extension Hexagonal Binning](hexabin2.jpg)
