@@ -6,13 +6,20 @@ This is a very much a first attempt.
 
 The extension groups dense bunches of points into aggregated hexagonal bins.  These hexagonal bins are colour coded based on the Sequential Classes colour scale, relating to the density of points within the bin.  You can select a single hexagon, and the relevant selections will be made in Sense.
 
-An example (HexBinning.qvf) is included.
+An example (Hexagonal Binning.qvf) is included.
 
 Future improvements:
 
-Scaling of hexagon sizes and responsive design
+partly fixed: Scaling of hexagon sizes and responsive design
 Dealing with > 1000 points
 Inverted (negative) y-axis and scale requires resolution
-Clipping of hexagons at edge of axes
-Configuration on hexagon size
-Configuration of hexagon colour
+fixed: Clipping of hexagons at edge of axes
+fixed: Configuration on hexagon size
+fixed: Configuration of hexagon colour
+
+added: Fixed layout and colouring for constant size on selection
+added: Option to fill the mesh with hexagons
+
+![Qlik Sense Extension Hexagonal Binning](hexabin1.PNG)
+
+![Qlik Sense Extension Hexagonal Binning](hexabin2.PNG)
