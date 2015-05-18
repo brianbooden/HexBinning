@@ -78,6 +78,9 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 								}, {
 									value: 1,
 									label: "y-Axis"
+								}, {
+									value: 2,
+									label: "Hexabin Member Count"
 								}
 								],
 							defaultValue: 0
@@ -103,6 +106,22 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 							}],
 							defaultValue: false
 						},				
+						titleLayout:{
+							ref: "titleLayout",
+							type: "integer",
+							component: "dropdown",
+							label: "Title Layout",
+							options: 
+								[ {
+									value: 0,
+									label: "Hexabin Member Count"
+								}, {
+									value: 1,
+									label: "Hexabin Member Details"
+								}
+								],
+							defaultValue: 0
+						},							  
 						firstGroup: {
 							label: "Static Layout",
 							items: {
@@ -172,7 +191,8 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				return d.qFallbackTitle;
 			});
 			// Create a new array for our extension with a row for each row in the qMatrix
-			var data = qMatrix.map(function(d) {
+			// Filter dimesnion Null value 
+			var data = qMatrix.filter(function(d) { return d[0].qElemNumber >= 0; } ).map(function(d) {
 				// for each element in the matrix, create a new object that has a property
 				// for the grouping dimension, the first metric, and the second metric
 				return {
@@ -187,6 +207,7 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				colorAxis = layout.colorAxis,
 				hexbinRadius = layout.hexbinRadius,
 				fillMesh = layout.fillMesh,
+				titleLayout = layout.titleLayout,
 				useStaticLayout = layout.useStaticLayout,
 				minXAxis = layout.minXAxis,
 				minYAxis = layout.minYAxis,
@@ -216,13 +237,13 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				$element.append($('<div />').attr("id", id).css({ height: height, width: width }))
 			}
 
-			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis);
+			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis);
 
 		}
 	};
 });
 
-var viz = function (self, data, labels, width, height, id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis) {
+var viz = function (self, data, labels, width, height, id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis) {
 	
 	// Set up index and array to store points data for hexbin
 	var index;
@@ -238,21 +259,6 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 		width = width - margin.left - margin.right,
 		height = height - margin.top - margin.bottom;
 	
-
-	// Set the colour scale to mimic Sense Sequential Classes colour scheme
-	// var color = d3.scale.linear()
-		// .domain([0, 6])
-		// .range(["#FEE391", "#993404"])
-		// .interpolate(d3.interpolateLab);
-	if (useStaticLayout) {
-		var colorScale = d3.scale.quantile()
-			.domain([(colorAxis == 0 ? minXAxis : minYAxis ), (colorAxis == 0 ? maxXAxis : maxYAxis ) ])
-			.range(colorpalette);
-	} else {
-		var colorScale = d3.scale.quantile()
-			.domain([0, d3.mean(data,function(d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); }), d3.max(data, function (d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); })])
-			.range(colorpalette);
-	}	
 	// Create the hexbin underlying grid
 	// Set the radius to a set width of 20 pixels
 	var hexbin = d3.hexbin()
@@ -320,18 +326,42 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 			.style("fill", "none");
 	}
 	
+	var hexBin = hexbin(points);
+	
 	// Create the underlying mesh grid and the points within each hexagon
 	var hexpoints = svg.append("g")
 		.attr("clip-path", "url(" + document.location.href + "#clip)")  // fixes AngularJS problem because of: <base href="/">
 		.selectAll(".hexagon")
-		.data(hexbin(points));
+		.data(hexBin);
+
+	// Set the colour scale to mimic Sense Sequential Classes colour scheme
+	// var color = d3.scale.linear()
+		// .domain([0, 6])
+		// .range(["#FEE391", "#993404"])
+		// .interpolate(d3.interpolateLab);
+	if (colorAxis == 2) {
+		var colorScale = d3.scale.quantile()
+						.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
+						.range(colorpalette);		
+	} else {
+		if (useStaticLayout) {
+			var colorScale = d3.scale.quantile()
+				.domain([(colorAxis == 0 ? minXAxis : minYAxis ), (colorAxis == 0 ? maxXAxis : maxYAxis ) ])
+				.range(colorpalette);
+		} else {
+			var colorScale = d3.scale.quantile()
+				.domain([0, d3.mean(data,function(d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); }), d3.max(data, function (d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); })])
+				.range(colorpalette);
+		}	
+	}
+	
 	
 	// Create, transform and colour the hexagons in the mesh, calc Metric average for colorpalette
 	var hexpoints2 = hexpoints.enter().append("path")
 		.attr("class", "hexagon")
 		.attr("d", hexbin.hexagon())
 		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-		.style("fill", function(d) { return colorScale(d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0)); });
+		.style("fill", function(d) { return colorScale((colorAxis == 2 ? d.length : d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0))); });
 		
 	// Create the y-axis label
 	svg.append("g")
@@ -374,8 +404,12 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 			// Stop the event propagating in case we add other events later
 			d3.event.stopPropagation();
 	});
-	
-	hexpoints2.append("title").text(function(d) { return d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n"); } );
+
+	if (titleLayout == 0) {
+		hexpoints2.append("title").text(function(d) { return "Count: " + d.length; } );
+	} else {
+		hexpoints2.append("title").text(function(d) { return d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n"); } );
+	}
 
 }
 
