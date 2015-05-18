@@ -12,7 +12,7 @@ Future improvements:
 
 1. partly fixed: Scaling of hexagon sizes and responsive design
 2. Dealing with > 1000 points
-3. Inverted (negative) y-axis and scale requires resolution
+3. fixed: Inverted (negative) y-axis and scale requires resolution
 4. fixed: Clipping of hexagons at edge of axes
 5. fixed: Configuration on hexagon size
 6. fixed: Configuration of hexagon colour
@@ -22,3 +22,5 @@ Future improvements:
 ![Qlik Sense Extension Hexagonal Binning](hexabin1.jpg)
 
 ![Qlik Sense Extension Hexagonal Binning](hexabin2.jpg)
+
+![Qlik Sense Extension Hexagonal Binning](hexabin3.jpg)

@@ -277,7 +277,7 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 		// Set the y-axis to min and max of Metric 2	
 		var y = d3.scale.linear()
 			.domain([minYAxis, maxYAxis])
-			.range([0, height]);		
+			.range([height, 0]); // swap y-Axis	
 	} else {
 		// Set the y-axis to min and max of Metric 2	
 		var x = d3.scale.linear()
@@ -287,7 +287,7 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 		// Set the y-axis to min and max of Metric 2	
 		var y = d3.scale.linear()
 			.domain(d3.extent(data, function(d) { return d.Metric2; }))
-			.range([0, height]);
+			.range([height, 0]); // swap y-Axis
 	}
 	// Draw the x-axis
 	var xAxis = d3.svg.axis()
