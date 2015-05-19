@@ -14,7 +14,7 @@
 
 .qv-object-HexagonalBinning .hexagon {
   fill: none;
-  stroke: #000;
+  stroke: grey;
   stroke-width: .5px;
 }
 

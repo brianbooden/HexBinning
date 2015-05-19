@@ -322,7 +322,7 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 			.attr("clip-path", "url(" + document.location.href + "#clip)")
 			.attr("d", hexbin.mesh())
 			.style("stroke-width", .5)
-			.style("stroke", "black")
+			.style("stroke", "grey")
 			.style("fill", "none");
 	}
 	
