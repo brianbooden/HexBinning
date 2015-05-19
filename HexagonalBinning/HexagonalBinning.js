@@ -172,7 +172,22 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 									show: function(layout) { return layout.useStaticLayout } 
 								}
 							}
-						}	   
+						},	   
+						centerHexagons: {
+							ref: "centerHexagons",
+							type: "boolean",
+							component: "switch",
+							label: "Center Hexagons",
+							options: [{
+								value: true,
+								label: "On"
+							}, {
+								value: false,
+								label: "Off"
+							}],
+							defaultValue: false,
+							show: function(layout) { return !layout.useStaticLayout } 
+						},				
 					}
 				}
 			}
@@ -212,7 +227,8 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				minXAxis = layout.minXAxis,
 				minYAxis = layout.minYAxis,
 				maxXAxis = layout.maxXAxis,
-				maxYAxis = layout.maxYAxis;
+				maxYAxis = layout.maxYAxis,
+				centerHexagons = layout.centerHexagons;
 			
 			// Get the selected counts for the 2 dimensions, which will be used later for custom selection logic
 			var selections = {
@@ -234,16 +250,16 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 			else {
 				// if it hasn't been created, create it with the appropriate id and size
 				//$element.append($('<div />').attr("id", id).width(width).height(height));
-				$element.append($('<div />').attr("id", id).css({ height: height, width: width }))
+				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 
-			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis);
+			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
 
 		}
 	};
 });
 
-var viz = function (self, data, labels, width, height, id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis) {
+var viz = function (self, data, labels, width, height, id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
 	
 	// Set up index and array to store points data for hexbin
 	var index;
@@ -279,14 +295,38 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 			.domain([minYAxis, maxYAxis])
 			.range([height, 0]); // swap y-Axis	
 	} else {
-		// Set the y-axis to min and max of Metric 2	
+		// Set the y-axis to min and max of Metric 2
+		var xExt = d3.extent(data, function(d) { return d.Metric1; });
+		if (xExt[1] == 0) xExt[1] = hexbinRadius / 2;
+		if (centerHexagons) {
+			xExt[0] -= hexbinRadius / 4;
+			xExt[1] += hexbinRadius / 4;
+		} else {
+			if (xExt[0] == xExt[1]) {
+				xExt[0] -= hexbinRadius / 4;
+				xExt[1] += hexbinRadius / 4;
+			}
+		}
+console.log("xExt: "+xExt);
 		var x = d3.scale.linear()
-			.domain(d3.extent(data, function(d) { return d.Metric1; }))
+			.domain(xExt)
 			.range([0, width]);
 		
 		// Set the y-axis to min and max of Metric 2	
+		var yExt = d3.extent(data, function(d) { return d.Metric2; });
+		if (yExt[1] == 0) yExt[1] = hexbinRadius / 2;
+		if (centerHexagons) {
+			yExt[0] -= hexbinRadius / 4;
+			yExt[1] += hexbinRadius / 4;
+		} else {
+			if (yExt[0] == yExt[1]) {
+				yExt[0] -= hexbinRadius / 4;
+				yExt[1] += hexbinRadius / 4;
+			}
+		}
+console.log("yExt: "+yExt);
 		var y = d3.scale.linear()
-			.domain(d3.extent(data, function(d) { return d.Metric2; }))
+			.domain(yExt)
 			.range([height, 0]); // swap y-Axis
 	}
 	// Draw the x-axis
@@ -322,7 +362,7 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 			.attr("clip-path", "url(" + document.location.href + "#clip)")
 			.attr("d", hexbin.mesh())
 			.style("stroke-width", .5)
-			.style("stroke", "black")
+			.style("stroke", "grey")
 			.style("fill", "none");
 	}
 	
