@@ -297,22 +297,34 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 	} else {
 		// Set the y-axis to min and max of Metric 2
 		var xExt = d3.extent(data, function(d) { return d.Metric1; });
+		if (xExt[1] == 0) xExt[1] = hexbinRadius / 2;
 		if (centerHexagons) {
-			if (xExt[1] == 0) xExt[1] =  hexbinRadius;
-			xExt[0] -= (hexbinRadius * xExt[1] / width);
-			xExt[1] += (hexbinRadius * xExt[1] / width);
+			xExt[0] -= hexbinRadius / 4;
+			xExt[1] += hexbinRadius / 4;
+		} else {
+			if (xExt[0] == xExt[1]) {
+				xExt[0] -= hexbinRadius / 4;
+				xExt[1] += hexbinRadius / 4;
+			}
 		}
+console.log("xExt: "+xExt);
 		var x = d3.scale.linear()
 			.domain(xExt)
 			.range([0, width]);
 		
 		// Set the y-axis to min and max of Metric 2	
 		var yExt = d3.extent(data, function(d) { return d.Metric2; });
+		if (yExt[1] == 0) yExt[1] = hexbinRadius / 2;
 		if (centerHexagons) {
-			if (yExt[1] == 0) yExt[1] =  hexbinRadius;
-			yExt[0] -= (hexbinRadius * yExt[1] / height);
-			yExt[1] += (hexbinRadius * yExt[1] / height);
+			yExt[0] -= hexbinRadius / 4;
+			yExt[1] += hexbinRadius / 4;
+		} else {
+			if (yExt[0] == yExt[1]) {
+				yExt[0] -= hexbinRadius / 4;
+				yExt[1] += hexbinRadius / 4;
+			}
 		}
+console.log("yExt: "+yExt);
 		var y = d3.scale.linear()
 			.domain(yExt)
 			.range([height, 0]); // swap y-Axis
