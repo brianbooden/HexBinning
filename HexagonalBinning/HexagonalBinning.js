@@ -234,7 +234,7 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 			else {
 				// if it hasn't been created, create it with the appropriate id and size
 				//$element.append($('<div />').attr("id", id).width(width).height(height));
-				$element.append($('<div />').attr("id", id).css({ height: height, width: width }))
+				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 
 			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis);

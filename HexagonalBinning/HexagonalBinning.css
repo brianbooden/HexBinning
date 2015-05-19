@@ -3,12 +3,14 @@
 
 .qv-object-HexagonalBinning .axis text {
   font: 10px sans-serif;
+  font-family: "QlikView Sans", sans-serif;
+  fill: #595959;
 }
 
 .qv-object-HexagonalBinning .axis path,
 .qv-object-HexagonalBinning .axis line {
   fill: none;
-  stroke: #000;
+  stroke: lightgrey;
   shape-rendering: crispEdges;
 }
 
