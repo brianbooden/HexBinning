@@ -172,7 +172,22 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 									show: function(layout) { return layout.useStaticLayout } 
 								}
 							}
-						}	   
+						},	   
+						centerHexagons: {
+							ref: "centerHexagons",
+							type: "boolean",
+							component: "switch",
+							label: "Center Hexagons",
+							options: [{
+								value: true,
+								label: "On"
+							}, {
+								value: false,
+								label: "Off"
+							}],
+							defaultValue: false,
+							show: function(layout) { return !layout.useStaticLayout } 
+						},				
 					}
 				}
 			}
@@ -212,7 +227,8 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				minXAxis = layout.minXAxis,
 				minYAxis = layout.minYAxis,
 				maxXAxis = layout.maxXAxis,
-				maxYAxis = layout.maxYAxis;
+				maxYAxis = layout.maxYAxis,
+				centerHexagons = layout.centerHexagons;
 			
 			// Get the selected counts for the 2 dimensions, which will be used later for custom selection logic
 			var selections = {
@@ -237,13 +253,13 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 
-			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis);
+			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
 
 		}
 	};
 });
 
-var viz = function (self, data, labels, width, height, id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis) {
+var viz = function (self, data, labels, width, height, id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
 	
 	// Set up index and array to store points data for hexbin
 	var index;
@@ -279,14 +295,26 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 			.domain([minYAxis, maxYAxis])
 			.range([height, 0]); // swap y-Axis	
 	} else {
-		// Set the y-axis to min and max of Metric 2	
+		// Set the y-axis to min and max of Metric 2
+		var xExt = d3.extent(data, function(d) { return d.Metric1; });
+		if (centerHexagons) {
+			if (xExt[1] == 0) xExt[1] =  hexbinRadius;
+			xExt[0] -= (hexbinRadius * xExt[1] / width);
+			xExt[1] += (hexbinRadius * xExt[1] / width);
+		}
 		var x = d3.scale.linear()
-			.domain(d3.extent(data, function(d) { return d.Metric1; }))
+			.domain(xExt)
 			.range([0, width]);
 		
 		// Set the y-axis to min and max of Metric 2	
+		var yExt = d3.extent(data, function(d) { return d.Metric2; });
+		if (centerHexagons) {
+			if (yExt[1] == 0) yExt[1] =  hexbinRadius;
+			yExt[0] -= (hexbinRadius * yExt[1] / height);
+			yExt[1] += (hexbinRadius * yExt[1] / height);
+		}
 		var y = d3.scale.linear()
-			.domain(d3.extent(data, function(d) { return d.Metric2; }))
+			.domain(yExt)
 			.range([height, 0]); // swap y-Axis
 	}
 	// Draw the x-axis
