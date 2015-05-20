@@ -35,37 +35,62 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				settings : {
 					uses : "settings",
 					items : {						
-						 colors: {
-								  ref: "ColorSchema",
-								  type: "string",
-								  component: "dropdown",
-								  label: "Color",
-								  options: 
-									[ {
-										value: "#ffffe5, #fff7bc, #fee391, #fec44f, #fe9929, #ec7014, #cc4c02, #993404, #662506",
-										label: "Sequencial"
-									}, {
-										value: "#662506, #993404, #cc4c02, #ec7014, #fe9929, #fec44f, #fee391, #fff7bc, #ffffe5",
-										label: "Sequencial (Reverse)"
-									}, {
-										value: "#d73027, #f46d43, #fdae61, #fee090, #ffffbf, #e0f3f8, #abd9e9, #74add1, #4575b4",
-										label: "Diverging RdYlBu"
-									}, {
-										value: "#4575b4, #74add1, #abd9e9, #e0f3f8, #ffffbf, #fee090, #fdae61, #f46d43, #d73027",
-										label: "Diverging BuYlRd (Reverse)"
-									}, {
-										value: "#f7fbff, #deebf7, #c6dbef, #9ecae1, #6baed6, #4292c6, #2171b5, #08519c, #08306b",
-										label: "Blues"
-									}, {
-										value: "#fff5f0, #fee0d2, #fcbba1, #fc9272, #fb6a4a, #ef3b2c, #cb181d, #a50f15, #67000d",
-										label: "Reds"
-									}, {
-										value: "#ffffd9, #edf8b1, #c7e9b4, #7fcdbb, #41b6c4, #1d91c0, #225ea8, #253494, #081d58",
-										label: "YlGnBu"
-									}
-									],
-								  defaultValue: "#ffffe5, #fff7bc, #fee391, #fec44f, #fe9929, #ec7014, #cc4c02, #993404, #662506"
-							   },
+						binningMode: {
+							ref: "binningMode",
+							type: "integer",
+							component: "dropdown",
+							label: "Binning Mode",
+							options: 
+								[ {
+									value: 0,
+									label: "Color Binning"
+								}, {
+									value: 1,
+									label: "Area Binning"
+								}
+								],
+							defaultValue: 0
+						}, 
+						areaColor: {
+							ref: "areaColor",
+							type: "string",
+							label: "Area Color",
+							defaultValue: "#d73027",
+							expression: "optional",
+							show: function(layout) { return layout.binningMode == 1 } 
+						}, 
+						colors: {
+							ref: "ColorSchema",
+							type: "string",
+							component: "dropdown",
+							label: "Color",
+							show: function(layout) { return layout.binningMode == 0 },
+							options: 
+							[ {
+								value: "#ffffe5, #fff7bc, #fee391, #fec44f, #fe9929, #ec7014, #cc4c02, #993404, #662506",
+								label: "Sequencial"
+							}, {
+								value: "#662506, #993404, #cc4c02, #ec7014, #fe9929, #fec44f, #fee391, #fff7bc, #ffffe5",
+								label: "Sequencial (Reverse)"
+							}, {
+								value: "#d73027, #f46d43, #fdae61, #fee090, #ffffbf, #e0f3f8, #abd9e9, #74add1, #4575b4",
+								label: "Diverging RdYlBu"
+							}, {
+								value: "#4575b4, #74add1, #abd9e9, #e0f3f8, #ffffbf, #fee090, #fdae61, #f46d43, #d73027",
+								label: "Diverging BuYlRd (Reverse)"
+							}, {
+								value: "#f7fbff, #deebf7, #c6dbef, #9ecae1, #6baed6, #4292c6, #2171b5, #08519c, #08306b",
+								label: "Blues"
+							}, {
+								value: "#fff5f0, #fee0d2, #fcbba1, #fc9272, #fb6a4a, #ef3b2c, #cb181d, #a50f15, #67000d",
+								label: "Reds"
+							}, {
+								value: "#ffffd9, #edf8b1, #c7e9b4, #7fcdbb, #41b6c4, #1d91c0, #225ea8, #253494, #081d58",
+								label: "YlGnBu"
+							}
+							],
+							defaultValue: "#ffffe5, #fff7bc, #fee391, #fec44f, #fe9929, #ec7014, #cc4c02, #993404, #662506"
+							},
 						colorAxis:{
 							ref: "colorAxis",
 							type: "integer",
@@ -83,14 +108,23 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 									label: "Hexabin Member Count"
 								}
 								],
-							defaultValue: 0
+							defaultValue: 0,
+							show: function(layout) { return layout.binningMode == 0 }
 						},							  
-						hexbinRadius:{
-							ref: "hexbinRadius",
+						maxRadius:{
+							ref: "maxRadius",
 							type: "integer",
-							label: "Radius",
+							label: "Max. Radius",
 							defaultValue: 20,
 							expression: "optional"
+						},
+						minRadius:{
+							ref: "minRadius",
+							type: "integer",
+							label: "Min. Radius",
+							defaultValue: 2,
+							expression: "optional",
+							show: function(layout) { return layout.binningMode == 1 }
 						},
 						fillMesh: {
 							ref: "fillMesh",
@@ -218,9 +252,12 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				}
 			});
 
-			var colorpalette = layout.ColorSchema.split(", "),
+			var binningMode = layout.binningMode,
+				areaColor = layout.areaColor,
+ 				colorpalette = layout.ColorSchema.split(", "),
 				colorAxis = layout.colorAxis,
-				hexbinRadius = layout.hexbinRadius,
+				maxRadius = layout.maxRadius,
+				minRadius = layout.minRadius,
 				fillMesh = layout.fillMesh,
 				titleLayout = layout.titleLayout,
 				useStaticLayout = layout.useStaticLayout,
@@ -249,17 +286,16 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 			}
 			else {
 				// if it hasn't been created, create it with the appropriate id and size
-				//$element.append($('<div />').attr("id", id).width(width).height(height));
 				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 
-			viz(self, data, measureLabels, width, height,id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
+			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
 
 		}
 	};
 });
 
-var viz = function (self, data, labels, width, height, id, selections, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
+var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
 	
 	// Set up index and array to store points data for hexbin
 	var index;
@@ -282,7 +318,7 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 		// This solves the scaling problem
 		.x(function(d) { return x(d[0]); })
 		.y(function(d) { return y(d[1]); })
-		.radius(hexbinRadius);
+		.radius(maxRadius);
 	
 	if (useStaticLayout) {
 		// Set the x-axis to min and max of Metric 1
@@ -297,34 +333,32 @@ var viz = function (self, data, labels, width, height, id, selections, colorpale
 	} else {
 		// Set the y-axis to min and max of Metric 2
 		var xExt = d3.extent(data, function(d) { return d.Metric1; });
-		if (xExt[1] == 0) xExt[1] = hexbinRadius / 2;
+		if (xExt[1] == 0) xExt[1] = maxRadius / 2;
 		if (centerHexagons) {
-			xExt[0] -= hexbinRadius / 4;
-			xExt[1] += hexbinRadius / 4;
+			xExt[0] -= maxRadius / 4;
+			xExt[1] += maxRadius / 4;
 		} else {
 			if (xExt[0] == xExt[1]) {
-				xExt[0] -= hexbinRadius / 4;
-				xExt[1] += hexbinRadius / 4;
+				xExt[0] -= maxRadius / 4;
+				xExt[1] += maxRadius / 4;
 			}
 		}
-console.log("xExt: "+xExt);
 		var x = d3.scale.linear()
 			.domain(xExt)
 			.range([0, width]);
 		
 		// Set the y-axis to min and max of Metric 2	
 		var yExt = d3.extent(data, function(d) { return d.Metric2; });
-		if (yExt[1] == 0) yExt[1] = hexbinRadius / 2;
+		if (yExt[1] == 0) yExt[1] = maxRadius / 2;
 		if (centerHexagons) {
-			yExt[0] -= hexbinRadius / 4;
-			yExt[1] += hexbinRadius / 4;
+			yExt[0] -= maxRadius / 4;
+			yExt[1] += maxRadius / 4;
 		} else {
 			if (yExt[0] == yExt[1]) {
-				yExt[0] -= hexbinRadius / 4;
-				yExt[1] += hexbinRadius / 4;
+				yExt[0] -= maxRadius / 4;
+				yExt[1] += maxRadius / 4;
 			}
 		}
-console.log("yExt: "+yExt);
 		var y = d3.scale.linear()
 			.domain(yExt)
 			.range([height, 0]); // swap y-Axis
@@ -375,34 +409,46 @@ console.log("yExt: "+yExt);
 		.data(hexBin);
 
 	// Set the colour scale to mimic Sense Sequential Classes colour scheme
-	// var color = d3.scale.linear()
-		// .domain([0, 6])
-		// .range(["#FEE391", "#993404"])
-		// .interpolate(d3.interpolateLab);
-	if (colorAxis == 2) {
-		var colorScale = d3.scale.quantile()
-						.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
-						.range(colorpalette);		
-	} else {
-		if (useStaticLayout) {
+	if (binningMode == 0) {
+		// Color binning mode
+
+		if (colorAxis == 2) {
 			var colorScale = d3.scale.quantile()
-				.domain([(colorAxis == 0 ? minXAxis : minYAxis ), (colorAxis == 0 ? maxXAxis : maxYAxis ) ])
-				.range(colorpalette);
+							.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
+							.range(colorpalette);		
 		} else {
-			var colorScale = d3.scale.quantile()
-				.domain([0, d3.mean(data,function(d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); }), d3.max(data, function (d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); })])
-				.range(colorpalette);
-		}	
+			if (useStaticLayout) {
+				var colorScale = d3.scale.quantile()
+					.domain([(colorAxis == 0 ? minXAxis : minYAxis ), (colorAxis == 0 ? maxXAxis : maxYAxis ) ])
+					.range(colorpalette);
+			} else {
+				var colorScale = d3.scale.quantile()
+					.domain([0, d3.mean(data,function(d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); }), d3.max(data, function (d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); })])
+					.range(colorpalette);
+			}	
+		}
+			
+		// Create, transform and colour the hexagons in the mesh, calc Metric average for colorpalette
+		var hexpoints2 = hexpoints.enter().append("path")
+			.attr("class", "hexagon")
+			.attr("d", hexbin.hexagon())
+			.attr("id", function(d) {  return "path" + d[0][3]; })  // use Dim1_Key as Path ID
+			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+			.style("fill", function(d) { return colorScale((colorAxis == 2 ? d.length : d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0))); });
+	} else 	{
+		var radius = d3.scale.sqrt()
+			.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
+			.range([minRadius, maxRadius]);
+
+		// Area binning mode
+		var hexpoints2 = hexpoints.enter().append("path")
+			.attr("class", "hexagon")
+			.attr("d", function(d) { return hexbin.hexagon(radius(d.length)); })
+			.attr("id", function(d) {  return "path" + d[0][3]; })  // use Dim1_Key as Path ID
+			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+			.style("fill", function(d) { return areaColor; });
 	}
 	
-	
-	// Create, transform and colour the hexagons in the mesh, calc Metric average for colorpalette
-	var hexpoints2 = hexpoints.enter().append("path")
-		.attr("class", "hexagon")
-		.attr("d", hexbin.hexagon())
-		.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-		.style("fill", function(d) { return colorScale((colorAxis == 2 ? d.length : d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0))); });
-		
 	// Create the y-axis label
 	svg.append("g")
 		.attr("class", "y axis")
@@ -433,23 +479,41 @@ console.log("yExt: "+yExt);
 		// Set up an array to store the data points in the selected hexagon
 		var selectarray = [];
 		  
-			// Push the Dim1_key from the data array to get the unique selected values
-			for (index = 0; index < data.length; ++index) {
-				selectarray.push(data[index][3]);	
-			}
-			
-			// Make the selections
-			self.backendApi.selectValues(0,selectarray,false);
+		// Push the Dim1_key from the data array to get the unique selected values
+		for (index = 0; index < data.length; ++index) {
+			selectarray.push(data[index][3]);	
+		}
+		
+		// Make the selections
+		self.backendApi.selectValues(0,selectarray,false);
 
-			// Stop the event propagating in case we add other events later
-			d3.event.stopPropagation();
+		// Stop the event propagating in case we add other events later
+		d3.event.stopPropagation();
 	});
 
+	// Add title to svg path
 	if (titleLayout == 0) {
 		hexpoints2.append("title").text(function(d) { return "Count: " + d.length; } );
 	} else {
 		hexpoints2.append("title").text(function(d) { return d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n"); } );
 	}
+
+/* 
+	// Add text into hexabin 	
+	svg.append("g").data(hexBin)
+		.append("text")
+		.attr("class", "linklabel")
+		.style("fill","white")
+		.attr("font-size", "10px")
+		.attr("x", 1)
+		.attr("y", 1)
+		//.attr("dy", ".35em")
+		.attr("text-anchor", "middle")
+		.append("textPath")
+//		.attr("xlink:href", function(d) { return "#path" + d[0][3]; })
+		.attr("xlink:href", function(d) { return "url(" + document.location.href + "#path" + d[0][3] + ")"; })
+		.text(function(d) { return d.length; });
+*/
 
 }
 
