@@ -111,12 +111,20 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 							defaultValue: 0,
 							show: function(layout) { return layout.binningMode == 0 }
 						},							  
-						hexbinRadius:{
-							ref: "hexbinRadius",
+						maxRadius:{
+							ref: "maxRadius",
 							type: "integer",
-							label: "Radius",
+							label: "Max. Radius",
 							defaultValue: 20,
 							expression: "optional"
+						},
+						minRadius:{
+							ref: "minRadius",
+							type: "integer",
+							label: "Min. Radius",
+							defaultValue: 2,
+							expression: "optional",
+							show: function(layout) { return layout.binningMode == 1 }
 						},
 						fillMesh: {
 							ref: "fillMesh",
@@ -248,7 +256,8 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				areaColor = layout.areaColor,
  				colorpalette = layout.ColorSchema.split(", "),
 				colorAxis = layout.colorAxis,
-				hexbinRadius = layout.hexbinRadius,
+				maxRadius = layout.maxRadius,
+				minRadius = layout.minRadius,
 				fillMesh = layout.fillMesh,
 				titleLayout = layout.titleLayout,
 				useStaticLayout = layout.useStaticLayout,
@@ -280,13 +289,13 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 
-			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
+			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
 
 		}
 	};
 });
 
-var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, hexbinRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
+var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
 	
 	// Set up index and array to store points data for hexbin
 	var index;
@@ -309,7 +318,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		// This solves the scaling problem
 		.x(function(d) { return x(d[0]); })
 		.y(function(d) { return y(d[1]); })
-		.radius(hexbinRadius);
+		.radius(maxRadius);
 	
 	if (useStaticLayout) {
 		// Set the x-axis to min and max of Metric 1
@@ -324,14 +333,14 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	} else {
 		// Set the y-axis to min and max of Metric 2
 		var xExt = d3.extent(data, function(d) { return d.Metric1; });
-		if (xExt[1] == 0) xExt[1] = hexbinRadius / 2;
+		if (xExt[1] == 0) xExt[1] = maxRadius / 2;
 		if (centerHexagons) {
-			xExt[0] -= hexbinRadius / 4;
-			xExt[1] += hexbinRadius / 4;
+			xExt[0] -= maxRadius / 4;
+			xExt[1] += maxRadius / 4;
 		} else {
 			if (xExt[0] == xExt[1]) {
-				xExt[0] -= hexbinRadius / 4;
-				xExt[1] += hexbinRadius / 4;
+				xExt[0] -= maxRadius / 4;
+				xExt[1] += maxRadius / 4;
 			}
 		}
 		var x = d3.scale.linear()
@@ -340,14 +349,14 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		
 		// Set the y-axis to min and max of Metric 2	
 		var yExt = d3.extent(data, function(d) { return d.Metric2; });
-		if (yExt[1] == 0) yExt[1] = hexbinRadius / 2;
+		if (yExt[1] == 0) yExt[1] = maxRadius / 2;
 		if (centerHexagons) {
-			yExt[0] -= hexbinRadius / 4;
-			yExt[1] += hexbinRadius / 4;
+			yExt[0] -= maxRadius / 4;
+			yExt[1] += maxRadius / 4;
 		} else {
 			if (yExt[0] == yExt[1]) {
-				yExt[0] -= hexbinRadius / 4;
-				yExt[1] += hexbinRadius / 4;
+				yExt[0] -= maxRadius / 4;
+				yExt[1] += maxRadius / 4;
 			}
 		}
 		var y = d3.scale.linear()
@@ -429,8 +438,8 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	} else 	{
 		var radius = d3.scale.sqrt()
 			.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
-			.range([1, hexbinRadius]);	
-		
+			.range([minRadius, maxRadius]);
+
 		// Area binning mode
 		var hexpoints2 = hexpoints.enter().append("path")
 			.attr("class", "hexagon")
