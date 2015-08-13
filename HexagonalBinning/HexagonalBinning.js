@@ -1,4 +1,4 @@
-define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function($, cssContent) {'use strict';
+define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_adj"], function($, cssContent) {'use strict';
 	$("<style>").html(cssContent).appendTo("head");
 	return {
 		initialProperties : {
@@ -288,7 +288,7 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 				// if it hasn't been created, create it with the appropriate id and size
 				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
-
+			
 			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
 
 		}
@@ -296,6 +296,8 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin"], function
 });
 
 var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
+	
+	
 	
 	// Set up index and array to store points data for hexbin
 	var index;
@@ -382,9 +384,80 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+	// Lasso functions to execute while lassoing
+	var lasso_start = function() {
+		// keep mouse cursor arrow instead of text select (auto)
+		$("#"+id).css('cursor','default');
+		
+		// clear all of the fills 
+		if (binningMode > 0) {
+			// Area binning mode
+			lasso.items()
+				.style("fill",null);
+		}
+
+		lasso.items()
+			.classed({"not_possible":true,"selected":false}); // style as not possible
+	};
+
+	var lasso_draw = function() {
+		// Style the possible dots
+		lasso.items().filter(function(d) {return d.possible===true})
+			.classed({"not_possible":false,"possible":true});
+
+		// Style the not possible dot
+		lasso.items().filter(function(d) {return d.possible===false})
+			.classed({"not_possible":true,"possible":false});
+	};
+
+	var lasso_end = function(data) {
+		var selectedItems = lasso.items().filter(function(d) {return d.selected===true});	
+		if (selectedItems[0].length > 0) {
+			//console.log(selectedItems[0]);
+			
+			// Set up an array to store the data points in the selected hexagon
+			var selectarray = [];
+			//Push the Dim1_key from the data array to get the unique selected values
+			for (index = 0; index < selectedItems[0].length; index++) {
+				for (item = 0; item < selectedItems[0][index].__data__.length; item++) {
+					selectarray.push(selectedItems[0][index].__data__[item][3]);	
+				}
+			}		
+			//Make the selections
+			self.backendApi.selectValues(0,selectarray,false);
+		} else {
+			// nothing in lasso, nothing to select
+			// Reset the color
+			if (binningMode > 0) {
+			// Area binning mode
+				lasso.items()
+					.style("fill", function(d) { return areaColor; });
+			}
+		}
+	};
+
+	// Create the area where the lasso event can be triggered
+	var lasso_area = svg.append("rect")
+						  .attr("width",width)
+						  .attr("height",height)
+						  .style("opacity",0);
+
+	//-----------------------------------------------------
+	// Define the lasso
+	var lasso = d3.lasso()
+		  .closePathDistance(75) // max distance for the lasso loop to be closed
+		  .closePathSelect(true) // can items be selected by closing the path?
+		  .hoverSelect(true) // can items by selected by hovering over them?
+		  .area(lasso_area) // area where the lasso can be started
+		  .on("start",lasso_start) // lasso start function
+		  .on("draw",lasso_draw) // lasso draw function
+		  .on("end",lasso_end); // lasso end function		  
+	//-----------------------------------------------------		
+
+		
 	// Create the mesh for the hexagons
 	var mesh = svg.append("svg:defs").append("svg:clipPath")
-		.attr("id", "clip")
+		.attr("id", id + "_clip")
 		.append("svg:rect")
 		.attr("class", "mesh")
 		.attr("width", width)
@@ -393,7 +466,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	if (fillMesh) {
 		// Fill mesh with hexagons
 		svg.append("svg:path")
-			.attr("clip-path", "url(" + document.location.href + "#clip)")
+			.attr("clip-path", "url(" + document.location.href + "#"+id + "_clip)")
 			.attr("d", hexbin.mesh())
 			.style("stroke-width", .5)
 			.style("stroke", "grey")
@@ -404,7 +477,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	
 	// Create the underlying mesh grid and the points within each hexagon
 	var hexpoints = svg.append("g")
-		.attr("clip-path", "url(" + document.location.href + "#clip)")  // fixes AngularJS problem because of: <base href="/">
+		.attr("clip-path", "url(" + document.location.href + "#"+id + "_clip)")  // fixes AngularJS problem because of: <base href="/">
 		.selectAll(".hexagon")
 		.data(hexBin);
 
@@ -473,6 +546,13 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			  .style("text-anchor", "end")
 			  .text(labels[0]);
 	
+	
+	//console.log(hexpoints2);
+	// Init the lasso on the svg:g that contains the dots
+	
+	svg.call(lasso);	
+	lasso.items(d3.selectAll("#"+id+" .hexagon"));
+
 	// Create the click function, to enable selections when clicking on a hexagon
 	hexpoints2.on("click", function(data) {
 
