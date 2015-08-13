@@ -61,3 +61,39 @@
   top: 100%;
   left: 0;
 }
+
+/* Code for Lasso from here */
+
+.qv-object-HexagonalBinning .dot {
+  stroke: #000;
+}
+
+.qv-object-HexagonalBinning .lasso path {
+  stroke: rgb(80,80,80);
+  stroke-width:2px;
+}
+
+.qv-object-HexagonalBinning .lasso .drawn {
+  fill-opacity:.05 ;
+}
+
+.qv-object-HexagonalBinning .lasso .loop_close {
+  fill:none;
+  stroke-dasharray: 4,4;
+}
+
+.qv-object-HexagonalBinning .lasso .origin {
+  fill:#4DC04E;
+  fill-opacity:0.7;
+
+}
+
+.qv-object-HexagonalBinning .not_possible {
+  fill:rgb(200,200,200);
+}
+
+.qv-object-HexagonalBinning .possible {
+  fill:#EC888C;
+  stroke: black;
+  stroke-width: 2px;
+}
