@@ -1,6 +1,6 @@
 HexBinning
 ==========
-Update: Now includes support for > 1000 data points, abbreviated extended tooltips, and support for Lasso functionality to selct multiple hexagons.
+Update: Now includes support for > 1000 data points, abbreviated extended tooltips, and support for Lasso functionality to select multiple hexagons.
 
 Hexagonal Binning Qlik Sense extension, based on hexbin.js D3 library.
 
@@ -18,12 +18,12 @@ Area Binning
 ============
 The size of the hexagonal bin is relative to the count of points contained within the bin.
 
-In both cases, you can select a single hexagon, and the relevant selections will be made in Sense.
+In both cases, you can select a single hexagon or use the lasso by clicking and dragging on an empty part of the chart, and the relevant selections will be made in Sense.
 
 An example (Hexagonal Binning - Fifa 14.qvf) is included.
 
 Future improvements:
-1. Visible member count inside hexagons
+1. Visible member count labels inside hexagons
 2. Ability to start lasso selection from inside a hexagon
 
 Recent Improvements:
@@ -38,8 +38,16 @@ Recent Improvements:
 8. added: Area binning mode
 9. added: minRadius property for area binning
 
-![Qlik Sense Extension Hexagonal Binning](hexabin1.jpg)
+![Qlik Sense Extension Hexagonal Binning](HexBinning.gif)
+Using Colour and Area Binning
+
+![Qlik Sense Extension Hexagonal Binning](HexBinning with 10k.gif)
+Support for 10k+ data points
 
 ![Qlik Sense Extension Hexagonal Binning](hexabin2.jpg)
 
+Hexagonal Binning Properties
+
 ![Qlik Sense Extension Hexagonal Binning](hexabin3.jpg)
+
+Hexagonal Binning Properties
