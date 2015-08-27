@@ -1,4 +1,4 @@
-define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_adj"], function($, cssContent) {'use strict';
+define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_adj","./senseUtils"], function($, cssContent) {'use strict';
 	$("<style>").html(cssContent).appendTo("head");
 	return {
 		initialProperties : {
@@ -231,10 +231,20 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_a
 		},
 		paint : function($element,layout) {
 		
-			var self = this;
+			// Call SenseUtils to page the data for > 10000 points
+			senseUtils.pageExtensionData(this, $element, layout, drawHex, self);
+			
+		}
+	};
+});
+
+function drawHex($element, layout, fullMatrix, self) {
 			
 			// get qMatrix data array
-			var qMatrix = layout.qHyperCube.qDataPages[0].qMatrix;
+			//var qMatrix = layout.qHyperCube.qDataPages[0].qMatrix;
+			//create matrix variable
+			var qMatrix = fullMatrix;
+			
 			// create a new array that contains the measure labels
 			var measureLabels = layout.qHyperCube.qMeasureInfo.map(function(d) {
 				return d.qFallbackTitle;
@@ -290,10 +300,10 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_a
 			}
 			
 			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
+	
+	
+}
 
-		}
-	};
-});
 
 var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
 	
@@ -422,7 +432,10 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 				for (item = 0; item < selectedItems[0][index].__data__.length; item++) {
 					selectarray.push(selectedItems[0][index].__data__[item][3]);	
 				}
-			}		
+			}
+
+			console.log(selectarray);
+			
 			//Make the selections
 			self.backendApi.selectValues(0,selectarray,false);
 		} else {
@@ -481,6 +494,8 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		.selectAll(".hexagon")
 		.data(hexBin);
 
+			
+		
 	// Set the colour scale to mimic Sense Sequential Classes colour scheme
 	if (binningMode == 0) {
 		// Color binning mode
@@ -519,7 +534,8 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			.attr("d", function(d) { return hexbin.hexagon(radius(d.length)); })
 			.attr("id", function(d) {  return "path" + d[0][3]; })  // use Dim1_Key as Path ID
 			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-			.style("fill", function(d) { return areaColor; });
+			.style("fill", function(d) { return areaColor; })
+			.style("text", function(d) { return "this"; });
 	}
 	
 	// Create the y-axis label
@@ -545,8 +561,8 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			  .attr("y", 40)
 			  .style("text-anchor", "end")
 			  .text(labels[0]);
-	
-	
+
+
 	//console.log(hexpoints2);
 	// Init the lasso on the svg:g that contains the dots
 	
@@ -564,6 +580,8 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			selectarray.push(data[index][3]);	
 		}
 		
+		console.log(selectarray);
+		
 		// Make the selections
 		self.backendApi.selectValues(0,selectarray,false);
 
@@ -575,7 +593,10 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	if (titleLayout == 0) {
 		hexpoints2.append("title").text(function(d) { return "Count: " + d.length; } );
 	} else {
-		hexpoints2.append("title").text(function(d) { return d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n"); } );
+		hexpoints2.append("title").text(function(d) { 
+		return (d.length > 20 
+			? d.slice(0,20).map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n") + "\n+" + (d.length -20) + " members"
+			: d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n")); } );
 	}
 
 /* 
@@ -598,7 +619,3 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 }
 
 
-
-
-	
-	
