@@ -7,7 +7,7 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_a
 				qDimensions : [],
 				qMeasures : [],
 				qInitialDataFetch : [{
-					qWidth : 3,
+					qWidth : 4,
 					qHeight : 1000
 				}]
 			}
@@ -24,7 +24,7 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_a
 				measures : {
 					uses : "measures",
 					min : 2,
-					max: 2
+					max: 3
 				},
 				sorting : {
 					uses : "sorting"
@@ -106,6 +106,9 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_a
 								}, {
 									value: 2,
 									label: "Hexabin Member Count"
+								}, {
+									value: 3,
+									label: "Third measure"
 								}
 								],
 							defaultValue: 0,
@@ -258,11 +261,13 @@ function drawHex($element, layout, fullMatrix, self) {
 					"Dim1":d[0].qText,
 					"Dim1_key":d[0].qElemNumber,
 					"Metric1":d[1].qNum,
-					"Metric2":d[2].qNum
+					"Metric2":d[2].qNum,
+					"Metric3": (typeof d[3] != 'undefined') ? d[3].qNum : undefined
 				}
 			});
 
 			var binningMode = layout.binningMode,
+				measureCount = layout.qHyperCube.qMeasureInfo.length,
 				areaColor = layout.areaColor,
  				colorpalette = layout.ColorSchema.split(", "),
 				colorAxis = layout.colorAxis,
@@ -299,13 +304,13 @@ function drawHex($element, layout, fullMatrix, self) {
 				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 			
-			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
+			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons, measureCount);
 	
 	
 }
 
 
-var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
+var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons, measureCount) {
 	
 	
 	
@@ -315,7 +320,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 
 	// Read in the data for each data point
 	for (index = 0; index < data.length; ++index) {
-		points.push([data[index].Metric1, data[index].Metric2, data[index].Dim1, data[index].Dim1_key]);
+		points.push([data[index].Metric1, data[index].Metric2, data[index].Dim1, data[index].Dim1_key, data[index].Metric3]);
 	}
 
 	// Set the margins of the object
@@ -494,16 +499,25 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		.selectAll(".hexagon")
 		.data(hexBin);
 
-			
+	if(colorAxis == 3 && measureCount < 3) colorAxis = 2;
 		
 	// Set the colour scale to mimic Sense Sequential Classes colour scheme
 	if (binningMode == 0) {
-		// Color binning mode
-
+		
+		// Color binning mode		
 		if (colorAxis == 2) {
 			var colorScale = d3.scale.quantile()
-							.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
-							.range(colorpalette);		
+							.domain([1, d3.max(hexBin, function (d) {
+								return d.length;
+							}) ])
+							.range(colorpalette);
+		} else if (colorAxis == 3) {
+			var colorScale = d3.scale.quantile()
+							.domain([
+								d3.min(hexBin, function (d) { return d3.mean(d, function (d) { return d[4]; }); }),
+								d3.max(hexBin, function (d) { return d3.mean(d, function (d) { return d[4]; }); })
+							])
+							.range(colorpalette);
 		} else {
 			if (useStaticLayout) {
 				var colorScale = d3.scale.quantile()
@@ -522,7 +536,33 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			.attr("d", hexbin.hexagon())
 			.attr("id", function(d) {  return "path" + d[0][3]; })  // use Dim1_Key as Path ID
 			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-			.style("fill", function(d) { return colorScale((colorAxis == 2 ? d.length : d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0))); });
+			.style("fill", function(d) {
+				
+				function sw() {
+					switch(colorAxis) {
+						case 2:
+							return d.length;
+							
+						case 3:
+						case 0:
+						case 1:
+							return d.reduce(function(sum, a, i, ar) {
+								sum += a[(colorAxis == 3) ? 4 : colorAxis];
+								return (
+									(i == ar.length - 1) ?
+									(
+										(ar.length == 0) ?
+										0 :
+										sum / ar.length
+									) :
+									sum
+								);
+							}, 0)
+					}
+				}
+				
+				return colorScale(sw());
+			});
 	} else 	{
 		var radius = d3.scale.sqrt()
 			.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
