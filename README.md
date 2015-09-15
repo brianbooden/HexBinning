@@ -18,13 +18,12 @@ Area Binning
 ============
 The size of the hexagonal bin is relative to the count of points contained within the bin.
 
-In both cases, you can select a single hexagon or use the lasso by clicking and dragging on an empty part of the chart, and the relevant selections will be made in Sense.
+In both cases, you can select a single hexagon or use the lasso by clicking and dragging on any part of the chart, and the relevant selections will be made in Sense.
 
 An example (Hexagonal Binning - Fifa 14.qvf) is included.
 
 Future improvements:
 1. Visible member count labels inside hexagons
-2. Ability to start lasso selection from inside a hexagon
 
 Recent Improvements:
 1. partly fixed: Scaling of hexagon sizes and responsive design (Ralf Becher)
@@ -32,11 +31,12 @@ Recent Improvements:
 3. fixed: Clipping of hexagons at edge of axes (Ralf Becher)
 4. fixed: Configuration on hexagon size (Ralf Becher)
 5. fixed: Configuration of hexagon colour (Ralf Becher)
-6. fixed: Dealing with > 1000 points
+6. fixed: Dealing with > 10000 data points
 7. added: Fixed layout and colouring for constant size on selection (Ralf Becher)
 7. added: Option to fill the mesh with hexagons (Ralf Becher)
 8. added: Area binning mode
 9. added: minRadius property for area binning
+10. fixed: starting lasso selection from inside a hexagon
 
 ![Qlik Sense Extension Hexagonal Binning](HexBinning.gif)
 Using Colour and Area Binning
