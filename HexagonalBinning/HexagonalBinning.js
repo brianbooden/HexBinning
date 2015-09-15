@@ -296,7 +296,7 @@ function drawHex($element, layout, fullMatrix, self) {
 			}
 			else {
 				// if it hasn't been created, create it with the appropriate id and size
-				$element.append($('<div />').attr({ "id": id, "class": ".qv-object-HexagonalBinning" }).css({ height: height, width: width }))
+				$element.append($('<div />').attr({ "id": id, "class": "qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 			
 			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
@@ -388,11 +388,19 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		.tickSize(6, -width);
 
 	// Create the svg element	
-	var svg = d3.select("#"+id).append("svg:svg")
-		.attr("width", width + margin.left + margin.right)
-		.attr("height", height + margin.top + margin.bottom)
-		.append("g")
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	var svg = d3.select("#"+id)
+		.append("svg:svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+	// Adding lasso area
+	svg.append("rect")
+			.attr("width", width)
+			.attr("height", height)
+			.attr("class", "lassoable")
+			.style("opacity",0)
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	svg = svg.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 	// Lasso functions to execute while lassoing
 	var lasso_start = function() {
@@ -433,8 +441,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 					selectarray.push(selectedItems[0][index].__data__[item][3]);	
 				}
 			}
-
-			console.log(selectarray);
+			//console.log(selectarray);
 			
 			//Make the selections
 			self.backendApi.selectValues(0,selectarray,false);
@@ -448,25 +455,6 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			}
 		}
 	};
-
-	// Create the area where the lasso event can be triggered
-	var lasso_area = svg.append("rect")
-						  .attr("width",width)
-						  .attr("height",height)
-						  .style("opacity",0);
-
-	//-----------------------------------------------------
-	// Define the lasso
-	var lasso = d3.lasso()
-		  .closePathDistance(75) // max distance for the lasso loop to be closed
-		  .closePathSelect(true) // can items be selected by closing the path?
-		  .hoverSelect(true) // can items by selected by hovering over them?
-		  .area(lasso_area) // area where the lasso can be started
-		  .on("start",lasso_start) // lasso start function
-		  .on("draw",lasso_draw) // lasso draw function
-		  .on("end",lasso_end); // lasso end function		  
-	//-----------------------------------------------------		
-
 		
 	// Create the mesh for the hexagons
 	var mesh = svg.append("svg:defs").append("svg:clipPath")
@@ -490,6 +478,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	
 	// Create the underlying mesh grid and the points within each hexagon
 	var hexpoints = svg.append("g")
+		.attr("class", "lassoable")
 		.attr("clip-path", "url(" + document.location.href + "#"+id + "_clip)")  // fixes AngularJS problem because of: <base href="/">
 		.selectAll(".hexagon")
 		.data(hexBin);
@@ -520,7 +509,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		var hexpoints2 = hexpoints.enter().append("path")
 			.attr("class", "hexagon")
 			.attr("d", hexbin.hexagon())
-			.attr("id", function(d) {  return "path" + d[0][3]; })  // use Dim1_Key as Path ID
+			.attr("id", function(d) {  return id + "_" + d[0][3]; })  // use Dim1_Key as Path ID
 			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
 			.style("fill", function(d) { return colorScale((colorAxis == 2 ? d.length : d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0))); });
 	} else 	{
@@ -532,7 +521,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		var hexpoints2 = hexpoints.enter().append("path")
 			.attr("class", "hexagon")
 			.attr("d", function(d) { return hexbin.hexagon(radius(d.length)); })
-			.attr("id", function(d) {  return "path" + d[0][3]; })  // use Dim1_Key as Path ID
+			.attr("id", function(d) {  return id + "_" + d[0][3]; })  // use Dim1_Key as Path ID
 			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
 			.style("fill", function(d) { return areaColor; })
 			.style("text", function(d) { return "this"; });
@@ -564,10 +553,24 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 
 
 	//console.log(hexpoints2);
-	// Init the lasso on the svg:g that contains the dots
 	
+	// Create the area where the lasso event can be triggered
+	var lasso_area = d3.select("#"+id).selectAll(".lassoable");
+	//-----------------------------------------------------
+	// Define the lasso
+	var lasso = d3.lasso()
+		  .closePathDistance(75) // max distance for the lasso loop to be closed
+		  .closePathSelect(true) // can items be selected by closing the path?
+		  .hoverSelect(true) // can items by selected by hovering over them?
+		  .area(lasso_area) // area where the lasso can be started
+		  .on("start",lasso_start) // lasso start function
+		  .on("draw",lasso_draw) // lasso draw function
+		  .on("end",lasso_end); // lasso end function		  
+	//-----------------------------------------------------		
+	
+	// Init the lasso on the svg:g that contains the dots	
 	svg.call(lasso);	
-	lasso.items(d3.selectAll("#"+id+" .hexagon"));
+	lasso.items(d3.select("#"+id).selectAll(".hexagon"));
 
 	// Create the click function, to enable selections when clicking on a hexagon
 	hexpoints2.on("click", function(data) {
@@ -595,8 +598,8 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	} else {
 		hexpoints2.append("title").text(function(d) { 
 		return (d.length > 20 
-			? d.slice(0,20).map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n") + "\n+" + (d.length -20) + " members"
-			: d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n")); } );
+			? (d.length > 5 ? d.length + " members:\n" : "") + d.slice(0,20).map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n") + "\n+" + (d.length -20) + " members"
+			: (d.length > 5 ? d.length + " members:\n" : "") + d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n")); } );
 	}
 
 /* 
