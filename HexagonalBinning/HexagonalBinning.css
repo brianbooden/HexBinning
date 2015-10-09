@@ -1,6 +1,30 @@
 .qv-object-HexagonalBinning div.qv-object-content-container {
 }
 
+.qv-object-HexagonalBinning text.label-brighter {
+	font-size: 9pt;
+	font-family: "QlikView Sans", sans-serif;
+	fill: #F0F0F0;
+}
+
+.qv-object-HexagonalBinning text.label-brighter-small {
+	font-size: 6pt;
+	font-family: "QlikView Sans", sans-serif;
+	fill: #F0F0F0;
+}
+
+.qv-object-HexagonalBinning text.label-darker {
+	font-size: 9pt;
+	font-family: "QlikView Sans", sans-serif;
+	fill: #A0A0A0;
+}
+
+.qv-object-HexagonalBinning text.label-darker-small {
+	font-size: 6pt;
+	font-family: "QlikView Sans", sans-serif;
+	fill: #A0A0A0;
+}
+
 .qv-object-HexagonalBinning .axis text {
   font: 10px sans-serif;
   font-family: "QlikView Sans", sans-serif;

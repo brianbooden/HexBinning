@@ -222,6 +222,22 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_a
 							defaultValue: false,
 							show: function(layout) { return !layout.useStaticLayout } 
 						},				
+						showNumbers:{
+							type: "boolean",
+							component: "switch",
+							translation: "Show Number in Bin",
+							ref: "showNumbers",
+							defaultValue: false,
+							trueOption: {
+							  value: true,
+							  translation: "properties.on"
+							},
+							falseOption: {
+							  value: false,
+							  translation: "properties.off"
+							},
+							show: function(layout) { return layout.binningMode == 0 }
+						}
 					}
 				}
 			}
@@ -275,7 +291,8 @@ function drawHex($element, layout, fullMatrix, self) {
 				minYAxis = layout.minYAxis,
 				maxXAxis = layout.maxXAxis,
 				maxYAxis = layout.maxYAxis,
-				centerHexagons = layout.centerHexagons;
+				centerHexagons = layout.centerHexagons,
+				showNumber = layout.showNumbers;
 			
 			// Get the selected counts for the 2 dimensions, which will be used later for custom selection logic
 			var selections = {
@@ -299,13 +316,13 @@ function drawHex($element, layout, fullMatrix, self) {
 				$element.append($('<div />').attr({ "id": id, "class": "qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 			
-			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons);
+			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons, showNumber);
 	
 	
 }
 
 
-var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons) {
+var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons, showNumber) {
 	
 	
 	
@@ -509,6 +526,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 		var hexpoints2 = hexpoints.enter().append("path")
 			.attr("class", "hexagon")
 			.attr("d", hexbin.hexagon())
+			.attr("binCnt", function(d) { return d.length; })
 			.attr("id", function(d) {  return id + "_" + d[0][3]; })  // use Dim1_Key as Path ID
 			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
 			.style("fill", function(d) { return colorScale((colorAxis == 2 ? d.length : d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0))); });
@@ -523,8 +541,8 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			.attr("d", function(d) { return hexbin.hexagon(radius(d.length)); })
 			.attr("id", function(d) {  return id + "_" + d[0][3]; })  // use Dim1_Key as Path ID
 			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
-			.style("fill", function(d) { return areaColor; })
-			.style("text", function(d) { return "this"; });
+			.style("fill", function(d) { return areaColor; });
+			//.style("text", function(d) { return "this"; });
 	}
 	
 	// Create the y-axis label
@@ -602,23 +620,52 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			: (d.length > 5 ? d.length + " members:\n" : "") + d.map(function(e) { return e[2] + ": " + e[0] + " / " +e[1]; }).join("\n")); } );
 	}
 
-/* 
-	// Add text into hexabin 	
-	svg.append("g").data(hexBin)
-		.append("text")
-		.attr("class", "linklabel")
-		.style("fill","white")
-		.attr("font-size", "10px")
-		.attr("x", 1)
-		.attr("y", 1)
-		//.attr("dy", ".35em")
-		.attr("text-anchor", "middle")
-		.append("textPath")
-//		.attr("xlink:href", function(d) { return "#path" + d[0][3]; })
-		.attr("xlink:href", function(d) { return "url(" + document.location.href + "#path" + d[0][3] + ")"; })
-		.text(function(d) { return d.length; });
-*/
+	// insert numbers
+	if (binningMode == 0 && showNumber) {
+		hexpoints2.each(function() {
+			var p = this;
+			var e = d3.select(p);
+			var binCnt = e.attr("binCnt");
+			var trans = e.attr("transform");
+			var title = e.select("title").text();
+			var t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+			t.setAttribute("transform", trans);
+			t.textContent = binCnt;
+			t.setAttribute("class", "label" + (d3.hsl(colorScale(binCnt)).brighter(1) == "#ffffff" ? "-darker" : "-brighter") + (((maxRadius < (binCnt).length * 7)) ? "-small" : ""));
+			t.setAttribute("dy", ".35em");
+			t.setAttribute("text-anchor", "middle");
+			p.parentNode.insertBefore(t, p.nextSibling);
+			var et = d3.select(t);
+			et.append("title").text(title);
+			et.on("click", function() {
+				// some crazy stuff here, no better idea for now..
+				simulateClick(p);
+			});
+
+		});
+
+		$("#"+id).css('cursor','default');
+	}
 
 }
 
-
+function simulateClick(elem /* Must be the element */) {
+    var evt = document.createEvent("MouseEvents");
+    evt.initMouseEvent(
+        "click", /* type */
+        true, /* canBubble */
+        true, /* cancelable */
+        window, /* view */
+        0, /* detail */
+        0, /* screenX */
+        0, /* screenY */
+        0, /* clientX */
+        0, /* clientY */
+        false, /* ctrlKey */
+        false, /* altKey */
+        false, /* shiftKey */
+        false, /* metaKey */
+        0, /* button */
+        null); /* relatedTarget */
+    elem.dispatchEvent(evt);
+}
