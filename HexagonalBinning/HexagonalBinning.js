@@ -278,6 +278,13 @@ function drawHex($element, layout, fullMatrix, self) {
 				}
 			});
 
+			var measureMin1 = 0, measureMax1 = 0, measureMin2 = 0, measureMax2 = 0;
+			measureMin1 = layout.qHyperCube.qMeasureInfo[0].qMin;
+			measureMax1 = layout.qHyperCube.qMeasureInfo[0].qMax;
+			measureMin2 = layout.qHyperCube.qMeasureInfo[1].qMin;
+			measureMax2 = layout.qHyperCube.qMeasureInfo[1].qMax;
+
+
 			var binningMode = layout.binningMode,
 				areaColor = layout.areaColor,
  				colorpalette = layout.ColorSchema.split(", "),
@@ -316,13 +323,44 @@ function drawHex($element, layout, fullMatrix, self) {
 				$element.append($('<div />').attr({ "id": id, "class": "qv-object-HexagonalBinning" }).css({ height: height, width: width }))
 			}
 			
-			viz(self, data, measureLabels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons, showNumber);
+			viz(
+				self, 
+				data, 
+				measureLabels, 
+				measureMin1,
+				measureMax1,
+				measureMin2,
+				measureMax2,
+				width, 
+				height, 
+				id, 
+				selections, 
+				binningMode, 
+				areaColor, 
+				colorpalette, 
+				colorAxis, 
+				maxRadius, 
+				minRadius, 
+				fillMesh, 
+				titleLayout, 
+				useStaticLayout, 
+				minXAxis, 
+				minYAxis, 
+				maxXAxis, 
+				maxYAxis, 
+				centerHexagons, 
+				showNumber);
 	
 	
 }
 
 
-var viz = function (self, data, labels, width, height, id, selections, binningMode, areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, centerHexagons, showNumber) {
+var viz = function (self, data, labels, 
+	measureMin1, measureMax1, measureMin2, measureMax2, 
+	width, height, id, selections, binningMode, 
+	areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, 
+	titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, 
+	centerHexagons, showNumber) {
 	
 	
 	
@@ -492,6 +530,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 	}
 	
 	var hexBin = hexbin(points);
+	var maxBinSize = d3.max(hexBin, function (d) { return d.length; });
 	
 	// Create the underlying mesh grid and the points within each hexagon
 	var hexpoints = svg.append("g")
@@ -508,7 +547,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 
 		if (colorAxis == 2) {
 			var colorScale = d3.scale.quantile()
-							.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
+							.domain([1, maxBinSize])
 							.range(colorpalette);		
 		} else {
 			if (useStaticLayout) {
@@ -517,7 +556,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 					.range(colorpalette);
 			} else {
 				var colorScale = d3.scale.quantile()
-					.domain([0, d3.mean(data,function(d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); }), d3.max(data, function (d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); })])
+					.domain([(colorAxis == 0 ? measureMin1 : measureMin2 ), d3.mean(data,function(d) { return (colorAxis == 0 ? d.Metric1 : d.Metric2 ); }), (colorAxis == 0 ? measureMax1 : measureMax2 )])
 					.range(colorpalette);
 			}	
 		}
@@ -532,7 +571,7 @@ var viz = function (self, data, labels, width, height, id, selections, binningMo
 			.style("fill", function(d) { return colorScale((colorAxis == 2 ? d.length : d.reduce(function(sum, a, i, ar) { sum += a[colorAxis];  return i==ar.length-1?(ar.length==0?0:sum/ar.length):sum},0))); });
 	} else 	{
 		var radius = d3.scale.sqrt()
-			.domain([1, d3.max(hexBin, function (d) { return d.length; }) ])
+			.domain([1, maxBinSize])
 			.range([minRadius, maxRadius]);
 
 		// Area binning mode
