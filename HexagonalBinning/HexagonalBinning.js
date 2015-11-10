@@ -1,4 +1,4 @@
-define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_adj","./senseUtils"], function($, cssContent) {'use strict';
+define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_adj","./senseUtils","./d3-legends"], function($, cssContent) {'use strict';
 	$("<style>").html(cssContent).appendTo("head");
 	return {
 		initialProperties : {
@@ -91,6 +91,22 @@ define(["jquery", "text!./HexagonalBinning.css","./d3.min","./hexbin","./lasso_a
 							],
 							defaultValue: "#ffffe5, #fff7bc, #fee391, #fec44f, #fe9929, #ec7014, #cc4c02, #993404, #662506"
 							},
+						showLegend:{
+							type: "boolean",
+							component: "switch",
+							translation: "Show Legend?",
+							ref: "showLegend",
+							defaultValue: true,
+							trueOption: {
+							  value: true,
+							  translation: "properties.on"
+							},
+							falseOption: {
+							  value: false,
+							  translation: "properties.off"
+							},
+							show: true
+						  },
 						colorAxis:{
 							ref: "colorAxis",
 							type: "integer",
@@ -288,6 +304,7 @@ function drawHex($element, layout, fullMatrix, self) {
 			var binningMode = layout.binningMode,
 				areaColor = layout.areaColor,
  				colorpalette = layout.ColorSchema.split(", "),
+				showLegend = layout.showLegend,
 				colorAxis = layout.colorAxis,
 				maxRadius = layout.maxRadius,
 				minRadius = layout.minRadius,
@@ -337,7 +354,8 @@ function drawHex($element, layout, fullMatrix, self) {
 				selections, 
 				binningMode, 
 				areaColor, 
-				colorpalette, 
+				colorpalette,
+				showLegend,			
 				colorAxis, 
 				maxRadius, 
 				minRadius, 
@@ -358,7 +376,7 @@ function drawHex($element, layout, fullMatrix, self) {
 var viz = function (self, data, labels, 
 	measureMin1, measureMax1, measureMin2, measureMax2, 
 	width, height, id, selections, binningMode, 
-	areaColor, colorpalette, colorAxis, maxRadius, minRadius, fillMesh, 
+	areaColor, colorpalette, showLegend, colorAxis, maxRadius, minRadius, fillMesh, 
 	titleLayout, useStaticLayout, minXAxis, minYAxis, maxXAxis, maxYAxis, 
 	centerHexagons, showNumber) {
 	
@@ -374,7 +392,8 @@ var viz = function (self, data, labels,
 	}
 
 	// Set the margins of the object
-	var margin = {top: 20, right: 10, bottom: 50, left: 50},
+	var topMargin = (showLegend == true & binningMode == 0) ? 40 : 20;
+	var margin = {top: topMargin, right: 10, bottom: 50, left: 50},
 		width = width - margin.left - margin.right,
 		height = height - margin.top - margin.bottom;
 	
@@ -447,6 +466,17 @@ var viz = function (self, data, labels,
 		.append("svg:svg")
 			.attr("width", width + margin.left + margin.right)
 			.attr("height", height + margin.top + margin.bottom)
+			
+	if (showLegend & binningMode == 0) {
+		// Check svg size in order to size legend text
+		var legendClass = (width < 200) ? "_smallest" : (width < 500) ? "_small" : "";
+		
+		// Create legend class
+		svg.append("g")
+		  .attr("class", "legendLinear" + legendClass)
+		  .attr("transform", "translate(50,0)");	
+	}
+	
 	// Adding lasso area
 	svg.append("rect")
 			.attr("width", width)
@@ -607,7 +637,29 @@ var viz = function (self, data, labels,
 			  .attr("y", 40)
 			  .style("text-anchor", "end")
 			  .text(labels[0]);
+			  
+	if (showLegend & binningMode == 0) {		  
+			  
+		var formatLegend = d3.format("0,");
 
+		// Grab the svg
+		var svg = d3.select("svg");
+
+		// Set Linear legend properties
+		var legendLinear = d3.legend.color()
+			 .shapeWidth(width / 9)
+			 .shapePadding(0)
+			 .orient('horizontal')
+			 .scale(colorScale)
+			 .labelFormat(d3.format(",.0f"))
+			 .labelAlign('middle')
+			 ;
+		
+		// Call legend with appropriate class to alter legend text size
+		svg.select(".legendLinear" + legendClass)
+		  .call(legendLinear);
+		
+	}
 
 	//console.log(hexpoints2);
 	

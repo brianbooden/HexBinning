@@ -121,3 +121,18 @@
   stroke: black;
   stroke-width: 2px;
 }
+
+.qv-object-HexagonalBinning .legendLinear {
+	font-size: 9pt;
+	font-family: "QlikView Sans", sans-serif;
+}
+
+.qv-object-HexagonalBinning .legendLinear_small{
+	font-size: 8pt;
+	font-family: "QlikView Sans", sans-serif;
+}
+
+.qv-object-HexagonalBinning .legendLinear_smallest{
+	font-size: 6pt;
+	font-family: "QlikView Sans", sans-serif;
+}
